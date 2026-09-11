@@ -31,11 +31,19 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/tasks', (req, res) => {
-  res.json(tasks);
+  const { status } = req.query;
+
+  if (status) {
+    const filteredTasks = tasks.filter((item) => item.status === status);
+    return res.json(filteredTasks);
+  }
+
+  return res.json(tasks);
 });
 
 app.get('/tasks/:id', (req, res) => {
-  const task = tasks.find((item) => item.id === Number(req.params.id));
+  const id = Number(req.params.id);
+  const task = tasks.find((item) => item.id === id);
 
   if (!task) {
     return res.status(404).json({ error: 'Task not found' });
