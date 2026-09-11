@@ -44,6 +44,19 @@ test('GET /tasks/:id returns 404 for an unknown task', async () => {
   assert.equal(body.error, 'Task not found');
 });
 
+test('GET /tasks?status=todo filters tasks by status', async () => {
+  const { response, body } = await request('/tasks?status=todo');
+
+  assert.equal(response.status, 200);
+  assert.ok(Array.isArray(body));
+  assert.ok(body.every((item) => item.status === 'todo'));
+});
+
+test('GET /tasks?status=unknown returns empty array', async () => {
+  const { response, body } = await request('/tasks?status=unknown');
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(body, []);
 test('POST /tasks rejects missing title with 400', async () => {
   const { response, body } = await request('/tasks', {
     method: 'POST',
