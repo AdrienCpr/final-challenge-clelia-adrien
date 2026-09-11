@@ -30,11 +30,10 @@ let tasks = [
 ];
 
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok'
-  });
+  res.json({ status: 'ok' });
 });
 
+// GET /tasks avec filtre par statut (Feature A)
 app.get('/tasks', (req, res) => {
   const { status } = req.query;
 
@@ -46,8 +45,10 @@ app.get('/tasks', (req, res) => {
   return res.json(tasks);
 });
 
+// GET /tasks/:id
 app.get('/tasks/:id', (req, res) => {
-  const task = tasks.find((item) => item.id === Number(req.params.id));
+  const id = Number(req.params.id);
+  const task = tasks.find((item) => item.id === id);
 
   if (!task) {
     return res.status(404).json({ error: 'Task not found' });
@@ -56,6 +57,7 @@ app.get('/tasks/:id', (req, res) => {
   return res.json(task);
 });
 
+// POST /tasks avec validations (Feature C)
 app.post('/tasks', (req, res) => {
   const { title, description, status = 'todo' } = req.body || {};
 
@@ -82,6 +84,7 @@ app.post('/tasks', (req, res) => {
   return res.status(201).json(task);
 });
 
+// DELETE /tasks/:id (Feature E)
 app.delete('/tasks/:id', (req, res) => {
   const id = Number(req.params.id);
   const taskIndex = tasks.findIndex((item) => item.id === id);
