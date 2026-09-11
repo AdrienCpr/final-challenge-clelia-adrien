@@ -1,0 +1,29 @@
+name: Bug Report
+description: Signaler un dysfonctionnement dans l'API
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description du problème
+      description: Décrivez le comportement constaté par rapport au comportement attendu.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Étapes de reproduction
+      description: Requêtes HTTP ou étapes pour reproduire l'anomalie.
+      placeholder: "1. Envoyer un POST sur /tasks sans titre\n2. Observer le code retour"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Critères d'acceptation
+      value: |
+        - [ ] L'anomalie est corrigée
+        - [ ] Un test de régression est ajouté
+    validations:
+      required: true
