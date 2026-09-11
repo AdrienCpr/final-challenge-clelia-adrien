@@ -22,6 +22,7 @@ async function request(path, options = {}) {
   }
 }
 
+// 1. Happy Paths
 test('GET /health returns an OK status', async () => {
   const { response, body } = await request('/health');
 
@@ -37,13 +38,6 @@ test('GET /tasks returns tasks', async () => {
   assert.ok(body.length > 0);
 });
 
-test('GET /tasks/:id returns 404 for an unknown task', async () => {
-  const { response, body } = await request('/tasks/999999');
-
-  assert.equal(response.status, 404);
-  assert.equal(body.error, 'Task not found');
-});
-
 test('GET /tasks?status=todo filters tasks by status', async () => {
   const { response, body } = await request('/tasks?status=todo');
 
@@ -52,11 +46,45 @@ test('GET /tasks?status=todo filters tasks by status', async () => {
   assert.ok(body.every((item) => item.status === 'todo'));
 });
 
-test('GET /tasks?status=unknown returns empty array', async () => {
-  const { response, body } = await request('/tasks?status=unknown');
+test('POST /tasks creates a new task with default status', async () => {
+  const newTask = { title: 'Write tests', description: 'Cover all edge cases' };
+  const { response, body } = await request('/tasks', {
+    method: 'POST',
+    body: JSON.stringify(newTask)
+  });
 
-  assert.equal(response.status, 200);
-  assert.deepEqual(body, []);
+  assert.equal(response.status, 201);
+  assert.equal(body.title, newTask.title);
+  assert.equal(body.status, 'todo');
+  assert.ok(typeof body.id === 'number');
+});
+
+test('DELETE /tasks/:id deletes existing task with 204', async () => {
+  const { response } = await request('/tasks/1', {
+    method: 'DELETE'
+  });
+
+  assert.equal(response.status, 204);
+});
+
+// 2. Missing Resources
+test('GET /tasks/:id returns 404 for an unknown task', async () => {
+  const { response, body } = await request('/tasks/999999');
+
+  assert.equal(response.status, 404);
+  assert.equal(body.error, 'Task not found');
+});
+
+test('DELETE /tasks/:id returns 404 for unknown task', async () => {
+  const { response, body } = await request('/tasks/999999', {
+    method: 'DELETE'
+  });
+
+  assert.equal(response.status, 404);
+  assert.equal(body.error, 'Task not found');
+});
+
+// 3. Validation Errors & Business Rules
 test('POST /tasks rejects missing title with 400', async () => {
   const { response, body } = await request('/tasks', {
     method: 'POST',
@@ -77,19 +105,21 @@ test('POST /tasks rejects invalid status with 400', async () => {
   assert.equal(body.error, 'Invalid status');
 });
 
-test('DELETE /tasks/:id deletes existing task with 204', async () => {
-  const { response } = await request('/tasks/1', {
-    method: 'DELETE'
+test('POST /tasks rejects title longer than 100 characters', async () => {
+  const longTitle = 'a'.repeat(101);
+  const { response, body } = await request('/tasks', {
+    method: 'POST',
+    body: JSON.stringify({ title: longTitle })
   });
 
-  assert.equal(response.status, 204);
+  assert.equal(response.status, 400);
+  assert.equal(body.error, 'Title must be less than 100 characters');
 });
 
-test('DELETE /tasks/:id returns 404 for unknown task', async () => {
-  const { response, body } = await request('/tasks/999999', {
-    method: 'DELETE'
-  });
+// 4. Regression & Edge Cases
+test('GET /tasks?status=unknown returns empty array', async () => {
+  const { response, body } = await request('/tasks?status=unknown');
 
-  assert.equal(response.status, 404);
-  assert.equal(body.error, 'Task not found');
+  assert.equal(response.status, 200);
+  assert.deepEqual(body, []);
 });
