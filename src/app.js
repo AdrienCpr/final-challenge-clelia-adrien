@@ -2,6 +2,7 @@ const express = require('express');
 
 const app = express();
 app.use(express.json());
+
 const ALLOWED_STATUSES = ['todo', 'in-progress', 'done'];
 
 let tasks = [
@@ -26,17 +27,25 @@ let tasks = [
 ];
 
 app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok'
-  });
+  res.json({ status: 'ok' });
 });
 
+// GET /tasks avec filtre par statut (Feature A)
 app.get('/tasks', (req, res) => {
-  res.json(tasks);
+  const { status } = req.query;
+
+  if (status) {
+    const filteredTasks = tasks.filter((item) => item.status === status);
+    return res.json(filteredTasks);
+  }
+
+  return res.json(tasks);
 });
 
+// GET /tasks/:id
 app.get('/tasks/:id', (req, res) => {
-  const task = tasks.find((item) => item.id === Number(req.params.id));
+  const id = Number(req.params.id);
+  const task = tasks.find((item) => item.id === id);
 
   if (!task) {
     return res.status(404).json({ error: 'Task not found' });
@@ -45,8 +54,9 @@ app.get('/tasks/:id', (req, res) => {
   return res.json(task);
 });
 
+// POST /tasks avec validations (Feature C)
 app.post('/tasks', (req, res) => {
-  const { title, description, status = 'todo' } = req.body;
+  const { title, description, status = 'todo' } = req.body || {};
 
   if (!title || typeof title !== 'string' || title.trim() === '') {
     return res.status(400).json({ error: 'Title is required' });
@@ -71,6 +81,7 @@ app.post('/tasks', (req, res) => {
   return res.status(201).json(task);
 });
 
+// DELETE /tasks/:id (Feature E)
 app.delete('/tasks/:id', (req, res) => {
   const id = Number(req.params.id);
   const taskIndex = tasks.findIndex((item) => item.id === id);
@@ -83,11 +94,12 @@ app.delete('/tasks/:id', (req, res) => {
   return res.status(204).send();
 });
 
-if (require.main === module) {
-  const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
-  app.listen(port, () => {
-    console.log(`Task API listening on port ${port}`);
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Task API running in ${NODE_ENV} mode on port ${PORT}`);
   });
 }
 
