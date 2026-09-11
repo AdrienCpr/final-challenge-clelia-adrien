@@ -1,7 +1,11 @@
 const express = require('express');
 
+const PORT = process.env.PORT || 3000;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
 const app = express();
 app.use(express.json());
+
 const ALLOWED_STATUSES = ['todo', 'in-progress', 'done'];
 
 let tasks = [
@@ -32,7 +36,14 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/tasks', (req, res) => {
-  res.json(tasks);
+  const { status } = req.query;
+
+  if (status) {
+    const filteredTasks = tasks.filter((item) => item.status === status);
+    return res.json(filteredTasks);
+  }
+
+  return res.json(tasks);
 });
 
 app.get('/tasks/:id', (req, res) => {
@@ -46,7 +57,7 @@ app.get('/tasks/:id', (req, res) => {
 });
 
 app.post('/tasks', (req, res) => {
-  const { title, description, status = 'todo' } = req.body;
+  const { title, description, status = 'todo' } = req.body || {};
 
   if (!title || typeof title !== 'string' || title.trim() === '') {
     return res.status(400).json({ error: 'Title is required' });
@@ -84,10 +95,8 @@ app.delete('/tasks/:id', (req, res) => {
 });
 
 if (require.main === module) {
-  const port = process.env.PORT || 3000;
-
-  app.listen(port, () => {
-    console.log(`Task API listening on port ${port}`);
+  app.listen(PORT, () => {
+    console.log(`Task API listening on port ${PORT} in ${NODE_ENV} mode`);
   });
 }
 
