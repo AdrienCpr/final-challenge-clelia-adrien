@@ -15,7 +15,7 @@ async function request(path, options = {}) {
       ...options
     });
 
-    const body = await response.json();
+    const body = response.status === 204 ? null : await response.json();
     return { response, body };
   } finally {
     server.close();
@@ -39,6 +39,43 @@ test('GET /tasks returns tasks', async () => {
 
 test('GET /tasks/:id returns 404 for an unknown task', async () => {
   const { response, body } = await request('/tasks/999999');
+
+  assert.equal(response.status, 404);
+  assert.equal(body.error, 'Task not found');
+});
+
+test('POST /tasks rejects missing title with 400', async () => {
+  const { response, body } = await request('/tasks', {
+    method: 'POST',
+    body: JSON.stringify({})
+  });
+
+  assert.equal(response.status, 400);
+  assert.equal(body.error, 'Title is required');
+});
+
+test('POST /tasks rejects invalid status with 400', async () => {
+  const { response, body } = await request('/tasks', {
+    method: 'POST',
+    body: JSON.stringify({ title: 'Task test', status: 'invalid-status' })
+  });
+
+  assert.equal(response.status, 400);
+  assert.equal(body.error, 'Invalid status');
+});
+
+test('DELETE /tasks/:id deletes existing task with 204', async () => {
+  const { response } = await request('/tasks/1', {
+    method: 'DELETE'
+  });
+
+  assert.equal(response.status, 204);
+});
+
+test('DELETE /tasks/:id returns 404 for unknown task', async () => {
+  const { response, body } = await request('/tasks/999999', {
+    method: 'DELETE'
+  });
 
   assert.equal(response.status, 404);
   assert.equal(body.error, 'Task not found');
