@@ -1,5 +1,8 @@
 const express = require('express');
 
+const PORT = process.env.PORT || 3000;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
 const app = express();
 app.use(express.json());
 
@@ -94,12 +97,9 @@ app.delete('/tasks/:id', (req, res) => {
   return res.status(204).send();
 });
 
-const PORT = process.env.PORT || 3000;
-const NODE_ENV = process.env.NODE_ENV || 'development';
-
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(`Task API running in ${NODE_ENV} mode on port ${PORT}`);
+    console.log(`Task API listening on port ${PORT} in ${NODE_ENV} mode`);
   });
 }
 
